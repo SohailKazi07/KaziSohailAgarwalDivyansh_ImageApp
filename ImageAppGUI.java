@@ -1,7 +1,6 @@
 import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
 import java.io.File;
+import javax.swing.*;
 
 /**
  * ImageAppGUI - Interactive image manipulation with GUI controls
@@ -20,16 +19,14 @@ public class ImageAppGUI extends JFrame {
     private JComboBox<String> overlayDropdown;
     private JComboBox<String> bgColorEffectDropdown;
     private JComboBox<String> overlayColorEffectDropdown;
-    private JButton bgRotateButton;
-    private JButton overlayRotateButton;
+    private JComboBox<String> bgRotateDropdown;
+    private JComboBox<String> overlayRotateDropdown;
     private JButton applyButton;
-    private JLabel imageLabel;
-    private JPanel displayPanel;
     
     public ImageAppGUI() {
         setTitle("ImageApp - Interactive Image Manipulation");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 800);
+        setSize(950, 320);
         setLayout(new BorderLayout());
         
         // setup control panel
@@ -54,11 +51,14 @@ public class ImageAppGUI extends JFrame {
         bgColorEffectDropdown.addItem("Grayscale");
         controlPanel.add(bgColorEffectDropdown);
         
-        // Background rotation button
+        // Background rotation dropdown
         controlPanel.add(new JLabel("Background Rotation:"));
-        bgRotateButton = new JButton("Rotate 90° (Current: 0°)");
-        bgRotateButton.addActionListener(e -> rotateBgImage());
-        controlPanel.add(bgRotateButton);
+        bgRotateDropdown = new JComboBox<>();
+        bgRotateDropdown.addItem("None (0°)");
+        bgRotateDropdown.addItem("90° Clockwise");
+        bgRotateDropdown.addItem("90° Counter-Clockwise");
+        bgRotateDropdown.addItem("180° Flip");
+        controlPanel.add(bgRotateDropdown);
         
         // Overlay image dropdown
         controlPanel.add(new JLabel("Overlay Image (lib2):"));
@@ -76,11 +76,14 @@ public class ImageAppGUI extends JFrame {
         overlayColorEffectDropdown.addItem("Grayscale");
         controlPanel.add(overlayColorEffectDropdown);
         
-        // Overlay rotation button
+        // Overlay rotation dropdown
         controlPanel.add(new JLabel("Overlay Rotation:"));
-        overlayRotateButton = new JButton("Rotate 90° (Current: 0°)");
-        overlayRotateButton.addActionListener(e -> rotateOverlayImage());
-        controlPanel.add(overlayRotateButton);
+        overlayRotateDropdown = new JComboBox<>();
+        overlayRotateDropdown.addItem("None (0°)");
+        overlayRotateDropdown.addItem("90° Clockwise");
+        overlayRotateDropdown.addItem("90° Counter-Clockwise");
+        overlayRotateDropdown.addItem("180° Flip");
+        controlPanel.add(overlayRotateDropdown);
         
         // Apply button
         controlPanel.add(new JLabel(""));
@@ -89,20 +92,6 @@ public class ImageAppGUI extends JFrame {
         controlPanel.add(applyButton);
         
         add(controlPanel, BorderLayout.NORTH);
-        
-        // Display panel
-        displayPanel = new JPanel();
-        displayPanel.setLayout(new BorderLayout());
-        displayPanel.setBackground(Color.LIGHT_GRAY);
-        imageLabel = new JLabel("Select images and click Apply", SwingConstants.CENTER);
-        imageLabel.setFont(new Font("Arial", Font.PLAIN, 18));
-        displayPanel.add(imageLabel, BorderLayout.CENTER);
-        add(displayPanel, BorderLayout.CENTER);
-        
-        // Status bar
-        JLabel statusBar = new JLabel("Ready. Select images and apply transformations.");
-        statusBar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        add(statusBar, BorderLayout.SOUTH);
         
         setVisible(true);
         
@@ -127,25 +116,16 @@ public class ImageAppGUI extends JFrame {
         }
     }
     
-    private void rotateBgImage() {
-        bgRotationAngle = (bgRotationAngle + 90) % 360;
-        bgRotateButton.setText("Rotate 90° (Current: " + bgRotationAngle + "°)");
-    }
-    
-    private void rotateOverlayImage() {
-        // update rotation angle
-        overlayRotationAngle = (overlayRotationAngle + 90) % 360;
-        overlayRotateButton.setText("Rotate 90° (Current: " + overlayRotationAngle + "°)");
-    }
     
     private void applyChanges() {
         String background = (String) backgroundDropdown.getSelectedItem();
         String overlay = (String) overlayDropdown.getSelectedItem();
         String bgColorEffect = (String) bgColorEffectDropdown.getSelectedItem();
         String overlayColorEffect = (String) overlayColorEffectDropdown.getSelectedItem();
+        String bgRotation = (String) bgRotateDropdown.getSelectedItem();
+        String overlayRotation = (String) overlayRotateDropdown.getSelectedItem();
         
         if (background == null || background.equals("None")) {
-            imageLabel.setText("Please select a background image");
             return;
         }
         
@@ -161,6 +141,7 @@ public class ImageAppGUI extends JFrame {
             }
             
             // Apply background rotation
+            int bgRotationAngle = getRotationAngle(bgRotation);
             if (bgRotationAngle != 0) {
                 pixels = applyRotation(pixels, bgRotationAngle);
                 workingPicture = createPictureFromPixels(pixels);
@@ -169,19 +150,30 @@ public class ImageAppGUI extends JFrame {
             // Apply overlay
             if (overlay != null && !overlay.equals("None")) {
                 currentOverlayImage = "lib2/" + overlay;
+                int overlayRotationAngle = getRotationAngle(overlayRotation);
                 applyOverlayWithEffects(workingPicture, currentOverlayImage, overlayColorEffect, overlayRotationAngle);
             }
             
             // Display the result
             currentPicture = workingPicture;
-            workingPicture.show();
-            
-            imageLabel.setText("Image updated successfully");
+            workingPicture.explore();
             
         } catch (Exception e) {
-            imageLabel.setText("Error: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+    
+    private int getRotationAngle(String rotationChoice) {
+        if (rotationChoice == null || rotationChoice.equals("None (0°)")) {
+            return 0;
+        } else if (rotationChoice.equals("90° Clockwise")) {
+            return 270; // 90 clockwise = 270 counter-clockwise
+        } else if (rotationChoice.equals("90° Counter-Clockwise")) {
+            return 90;
+        } else if (rotationChoice.equals("180° Flip")) {
+            return 180;
+        }
+        return 0;
     }
     
     private void applyColorEffect(Pixel[][] pixels, String effect) {

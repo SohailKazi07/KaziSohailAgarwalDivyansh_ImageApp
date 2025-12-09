@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class Picture extends SimplePicture 
 {
-  ///////////////////// constructors //////////////////////////////////
+  //--constructors--
   private final int LOW_FILTER = 4;
   private final int HIGH_FILTER = 64;
   
